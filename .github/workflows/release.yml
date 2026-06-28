@@ -1,0 +1,56 @@
+name: Release
+
+# Builds the (private) MUROBASE source and publishes a signed NSIS installer
+# plus latest.json to THIS public repo's Releases, which the app polls for
+# auto-updates. Run manually from the Actions tab.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "빌드할 소스 ref (브랜치/태그)"
+        default: "main"
+        required: true
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout private source
+        uses: actions/checkout@v4
+        with:
+          repository: rudtjq640/MUROBASE
+          ref: ${{ github.event.inputs.ref }}
+          token: ${{ secrets.SOURCE_REPO_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build, sign, and publish release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          # Version comes from src-tauri/tauri.conf.json (__VERSION__ template).
+          tagName: v__VERSION__
+          releaseName: "MUROBASE v__VERSION__"
+          releaseBody: "Windows 10/11 64-bit · MUROBASE_x64-setup.exe 를 받아 설치하세요. 기존 사용자는 앱 실행 시 자동 업데이트됩니다."
+          releaseDraft: false
+          prerelease: false
