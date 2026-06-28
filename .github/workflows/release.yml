@@ -51,6 +51,6 @@ jobs:
           # Version comes from src-tauri/tauri.conf.json (__VERSION__ template).
           tagName: v__VERSION__
           releaseName: "MUROBASE v__VERSION__"
-          releaseBody: "Windows 10/11 64-bit · MUROBASE_x64-setup.exe 를 받아 설치하세요. 기존 사용자는 앱 실행 시 자동 업데이트됩니다."
+          releaseBody: ""
           releaseDraft: false
           prerelease: false
